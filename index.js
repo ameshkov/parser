@@ -12,22 +12,25 @@ var processWebsites = function (websites) {
         // Initializing browser
         const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
 
-        // Initializing parser tab
-        const page = await browser.newPage();
-
         for (var i = 0; i < websites.length && i < 10000; i++) {
+            // Initializing parser tab
+            const page = await browser.newPage();
+
             var site = websites[i];
             var rank = site.rank;
             var domainName = site.domainName;
             var url = "http://" + domainName + "/";
 
             try {
-                await page.goto(url);
+                await page.goto(url, { timeout: 10000 });
                 var coinHive = await page.evaluate(function () { return typeof CoinHive !== 'undefined'; });
                 console.log(rank + "," + domainName + "," + coinHive);
             } catch (ex) {
                 console.log("Cannot load " + domainName + " due to: " + ex);
             }
+            
+            // Closing tab
+            await page.close();
         }
 
         await browser.close();
