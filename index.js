@@ -4,15 +4,13 @@ const unzip = require('unzip');
 const csv2 = require('csv2');
 const fs = require('fs');
 
-console.log('Starting execution');
-
-var processWebsites = function (websites) {
+var processWebsitesChrome = function (websites, start, count) {
 
     (async () => {
         // Initializing browser
-        const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+        const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 
-        for (var i = 0; i < websites.length && i < 10000; i++) {
+        for (var i = start; i < websites.length && i < (start + count); i++) {
             // Initializing parser tab
             const page = await browser.newPage();
 
@@ -28,7 +26,7 @@ var processWebsites = function (websites) {
             } catch (ex) {
                 console.log("Cannot load " + domainName + " due to: " + ex);
             }
-            
+
             // Closing tab
             await page.close();
         }
@@ -37,10 +35,66 @@ var processWebsites = function (websites) {
     })();
 };
 
-// processWebsites([
+/**
+ * Downloads website's content
+ * 
+ * @param {*} site Site object (rank, domainName)
+ */
+var downloadWebsite = function (site) {
+    var url = "http://" + site.domainName + "/";
+
+    return new Promise(function (resolve, reject) {
+        request({
+            url: url,
+            timeout: 10000
+        }, function (error, res, body) {
+            if (!error && res.statusCode == 200 && body) {
+                resolve(body);
+            } else {
+                reject(error);
+            }
+        });
+    });
+}
+
+/**
+ * Parses all the websites and looks for miner's code there
+ * 
+ * @param {*} websites 
+ */
+var processWebsitesHttp = function (websites, start, count) {
+
+    (async () => {
+        for (var i = start; i < websites.length && i < (start + count); i++) {
+            var site = websites[i];
+
+            try {
+                var body = await downloadWebsite(site);
+                var coinHive = body.indexOf("coin-hive.com") >= 0 ||
+                    body.indexOf("CoinHive") >= 0;
+                console.log(site.rank + "," + site.domainName + "," + coinHive);
+            } catch (ex) {
+                console.log("Cannot process " + site.domainName + " due to: " + ex);
+            }
+        }
+    })();
+};
+
+var args = process.argv.slice(2);
+var start = 0;
+var count = 100;
+if (args.length == 2) {
+    start = parseInt(args[0]);
+    count = parseInt(args[1]);
+}
+console.log('Starting execution. Start=' + start + ' Count=' + count);
+
+// processWebsitesHttp([
 //     { rank: "0", domainName: "yandex.ru" },
 //     { rank: "1", domainName: "coinhive.com" },
-//     { rank: "1", domainName: "baidu.com" }
+//     { rank: "2", domainName: "baidu.com" },
+//     { rank: "3", domainName: "mycrypto.guide" },
+//     { rank: "4", domainName: "uptobox.com" }
 // ]);
 
 // Downloading top 1 million Alexa websites
@@ -58,6 +112,6 @@ request.get('http://s3.amazonaws.com/alexa-static/top-1m.csv.zip')
             }
         }).on('finish', function () {
             console.log('Finished loading TOP Alexa: ' + websites.length);
-            processWebsites(websites);
+            processWebsitesHttp(websites, start, count);
         });
     });
