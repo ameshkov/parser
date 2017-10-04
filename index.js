@@ -34,27 +34,27 @@ var processWebsites = function (websites) {
     })();
 };
 
-processWebsites([
-    { rank: "0", domainName: "yandex.ru" },
-    { rank: "1", domainName: "coinhive.com" },
-    { rank: "1", domainName: "baidu.com" }
-]);
+// processWebsites([
+//     { rank: "0", domainName: "yandex.ru" },
+//     { rank: "1", domainName: "coinhive.com" },
+//     { rank: "1", domainName: "baidu.com" }
+// ]);
 
 // Downloading top 1 million Alexa websites
-// request.get('http://s3.amazonaws.com/alexa-static/top-1m.csv.zip')
-//     .pipe(unzip.Parse())
-//     .on('entry', function (entry) {
-//         var websites = [];
+request.get('http://s3.amazonaws.com/alexa-static/top-1m.csv.zip')
+    .pipe(unzip.Parse())
+    .on('entry', function (entry) {
+        var websites = [];
 
-//         entry.pipe(csv2()).on('data', function (data) {
-//             if (data && data.length === 2) {
-//                 websites.push({
-//                     rank: data[0],
-//                     domainName: data[1]
-//                 });
-//             }
-//         }).on('finish', function () {
-//             console.log('Finished loading TOP Alexa: ' + websites.length);
-//             processWebsites(websites);
-//         });
-//     });
+        entry.pipe(csv2()).on('data', function (data) {
+            if (data && data.length === 2) {
+                websites.push({
+                    rank: data[0],
+                    domainName: data[1]
+                });
+            }
+        }).on('finish', function () {
+            console.log('Finished loading TOP Alexa: ' + websites.length);
+            processWebsites(websites);
+        });
+    });
