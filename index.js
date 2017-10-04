@@ -15,25 +15,29 @@ var processWebsitesChrome = function (websites) {
         // Initializing browser
         const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 
-        for (var i = 0; i < websites.length; i++) {
-            // Initializing parser tab
-            const page = await browser.newPage();
+        try {
+            for (var i = 0; i < websites.length; i++) {
+                // Initializing parser tab
+                const page = await browser.newPage();
 
-            var site = websites[i];
-            var rank = site.rank;
-            var domainName = site.domainName;
-            var url = "http://" + domainName + "/";
+                var site = websites[i];
+                var rank = site.rank;
+                var domainName = site.domainName;
+                var url = "http://" + domainName + "/";
 
-            try {
-                await page.goto(url, { timeout: 10000 });
-                var coinHive = await page.evaluate(function () { return typeof CoinHive !== 'undefined'; });
-                console.log(rank + "," + domainName + "," + coinHive);
-            } catch (ex) {
-                console.log("Cannot load " + domainName + " due to: " + ex);
+                try {
+                    await page.goto(url, { timeout: 10000 });
+                    var coinHive = await page.evaluate(function () { return typeof CoinHive !== 'undefined'; });
+                    console.log(rank + "," + domainName + "," + coinHive);
+                } catch (ex) {
+                    console.log("Cannot load " + domainName + " due to: " + ex);
+                }
+
+                // Closing tab
+                await page.close();
             }
-
-            // Closing tab
-            await page.close();
+        } catch (ex) {
+            console.log("Error while parsing: " + ex);
         }
 
         await browser.close();
@@ -94,7 +98,17 @@ if (args.length == 2) {
 }
 console.log('Starting execution. Start=' + start + ' Count=' + count);
 
-// processWebsitesHttp([
+/**
+ * Processes the websites
+ * 
+ * @param {*} websites 
+ */
+var processWebsites = function(websites) {
+    var sites = websites.splice(start, count);
+    processWebsitesChrome(sites);
+};
+
+// processWebsites([
 //     { rank: "0", domainName: "yandex.ru" },
 //     { rank: "1", domainName: "coinhive.com" },
 //     { rank: "2", domainName: "baidu.com" },
@@ -120,7 +134,6 @@ request.get('http://s3.amazonaws.com/alexa-static/top-1m.csv.zip')
             }
         }).on('finish', function () {
             console.log('Finished loading TOP Alexa: ' + websites.length);
-            var sites = websites.splice(start, count);
-            processWebsitesChrome(sites);
+            processWebsites(websites);
         });
     });
