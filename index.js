@@ -4,13 +4,18 @@ const unzip = require('unzip');
 const csv2 = require('csv2');
 const fs = require('fs');
 
-var processWebsitesChrome = function (websites, start, count) {
+/**
+ * Checks websites via Chrome Puppetteer
+ * 
+ * @param {*} websites sites to check
+ */
+var processWebsitesChrome = function (websites) {
 
     (async () => {
         // Initializing browser
         const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 
-        for (var i = start; i < websites.length && i < (start + count); i++) {
+        for (var i = 0; i < websites.length; i++) {
             // Initializing parser tab
             const page = await browser.newPage();
 
@@ -62,7 +67,7 @@ var downloadWebsite = function (site) {
  * 
  * @param {*} websites 
  */
-var processWebsitesHttp = function (websites, start, count) {
+var processWebsitesHttp = function (websites) {
 
     (async () => {
         for (var i = start; i < websites.length && i < (start + count); i++) {
@@ -94,7 +99,10 @@ console.log('Starting execution. Start=' + start + ' Count=' + count);
 //     { rank: "1", domainName: "coinhive.com" },
 //     { rank: "2", domainName: "baidu.com" },
 //     { rank: "3", domainName: "mycrypto.guide" },
-//     { rank: "4", domainName: "uptobox.com" }
+//     { rank: "4", domainName: "uptobox.com" },
+//     { rank: "5", domainName: "123movies.co" },
+//     { rank: "6", domainName: "sugklonistiko.gr" },
+//     { rank: "7", domainName: "cinecalidad.to" }
 // ]);
 
 // Downloading top 1 million Alexa websites
@@ -112,6 +120,7 @@ request.get('http://s3.amazonaws.com/alexa-static/top-1m.csv.zip')
             }
         }).on('finish', function () {
             console.log('Finished loading TOP Alexa: ' + websites.length);
-            processWebsitesHttp(websites, start, count);
+            var sites = websites.splice(start, count);
+            processWebsitesChrome(sites);
         });
     });
