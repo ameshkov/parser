@@ -15,7 +15,7 @@ var processWebsites = function (websites) {
         // Initializing parser tab
         const page = await browser.newPage();
 
-        for (var i = 0; i < websites.length && i < 100; i++) {
+        for (var i = 0; i < websites.length && i < 10000; i++) {
             var site = websites[i];
             var rank = site.rank;
             var domainName = site.domainName;
