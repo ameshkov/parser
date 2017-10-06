@@ -26,9 +26,19 @@ var processWebsitesChrome = function (websites) {
                 var url = "http://" + domainName + "/";
 
                 try {
-                    await page.goto(url, { timeout: 10000 });
+                    await page.goto(url, { timeout: 60000 });
                     var coinHive = await page.evaluate(function () { return typeof CoinHive !== 'undefined'; });
-                    console.log(rank + "," + domainName + "," + coinHive);
+                    var jseCoin = await page.evaluate(function() { return typeof jseMine !== 'undefined'; });
+                    
+                    var result = {
+                        rank: rank,
+                        domainName: domainName,
+                        coinHive: coinHive,
+                        jseCoin: jseCoin,
+                        swData: "empty"
+                    };
+
+                    console.log(JSON.stringify(result));
                 } catch (ex) {
                     console.log("Cannot load " + domainName + " due to: " + ex);
                 }
@@ -41,51 +51,6 @@ var processWebsitesChrome = function (websites) {
         }
 
         await browser.close();
-    })();
-};
-
-/**
- * Downloads website's content
- * 
- * @param {*} site Site object (rank, domainName)
- */
-var downloadWebsite = function (site) {
-    var url = "http://" + site.domainName + "/";
-
-    return new Promise(function (resolve, reject) {
-        request({
-            url: url,
-            timeout: 10000
-        }, function (error, res, body) {
-            if (!error && res.statusCode == 200 && body) {
-                resolve(body);
-            } else {
-                reject(error);
-            }
-        });
-    });
-}
-
-/**
- * Parses all the websites and looks for miner's code there
- * 
- * @param {*} websites 
- */
-var processWebsitesHttp = function (websites) {
-
-    (async () => {
-        for (var i = start; i < websites.length && i < (start + count); i++) {
-            var site = websites[i];
-
-            try {
-                var body = await downloadWebsite(site);
-                var coinHive = body.indexOf("coin-hive.com") >= 0 ||
-                    body.indexOf("CoinHive") >= 0;
-                console.log(site.rank + "," + site.domainName + "," + coinHive);
-            } catch (ex) {
-                console.log("Cannot process " + site.domainName + " due to: " + ex);
-            }
-        }
     })();
 };
 
@@ -103,24 +68,13 @@ console.log('Starting execution. Start=' + start + ' Count=' + count);
  * 
  * @param {*} websites 
  */
-var processWebsites = function(websites) {
+var processWebsites = function (websites) {
     var sites = websites.splice(start, count);
     processWebsitesChrome(sites);
 };
 
-// processWebsites([
-//     { rank: "0", domainName: "yandex.ru" },
-//     { rank: "1", domainName: "coinhive.com" },
-//     { rank: "2", domainName: "baidu.com" },
-//     { rank: "3", domainName: "mycrypto.guide" },
-//     { rank: "4", domainName: "uptobox.com" },
-//     { rank: "5", domainName: "123movies.co" },
-//     { rank: "6", domainName: "sugklonistiko.gr" },
-//     { rank: "7", domainName: "cinecalidad.to" }
-// ]);
-
-// Downloading top 1 million Alexa websites
-request.get('http://s3.amazonaws.com/alexa-static/top-1m.csv.zip')
+// Top 1M Alexa from http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
+fs.createReadStream("top-1m.csv.zip")
     .pipe(unzip.Parse())
     .on('entry', function (entry) {
         var websites = [];
@@ -137,3 +91,14 @@ request.get('http://s3.amazonaws.com/alexa-static/top-1m.csv.zip')
             processWebsites(websites);
         });
     });
+
+// processWebsites([
+//     { rank: "0", domainName: "yandex.ru" },
+//     { rank: "1", domainName: "coinhive.com" },
+//     { rank: "2", domainName: "baidu.com" },
+//     { rank: "3", domainName: "mycrypto.guide" },
+//     { rank: "4", domainName: "uptobox.com" },
+//     { rank: "5", domainName: "123movies.co" },
+//     { rank: "6", domainName: "sugklonistiko.gr" },
+//     { rank: "7", domainName: "cinecalidad.to" }
+// ]);
