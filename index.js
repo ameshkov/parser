@@ -20,12 +20,12 @@ var processWebsitesChrome = function (websites) {
                 // Initializing parser tab
                 const page = await browser.newPage();
 
-                var site = websites[i];
-                var rank = site.rank;
-                var domainName = site.domainName;
-                var url = "http://" + domainName + "/";
+                try {                
+                    var site = websites[i];
+                    var rank = site.rank;
+                    var domainName = site.domainName;
+                    var url = "http://" + domainName + "/";
 
-                try {
                     await page.goto(url, { timeout: 60000 });
                     var coinHive = await page.evaluate(function () { return typeof CoinHive !== 'undefined'; });
                     var jseCoin = await page.evaluate(function() { return typeof jseMine !== 'undefined'; });
@@ -41,10 +41,16 @@ var processWebsitesChrome = function (websites) {
                     console.log(JSON.stringify(result));
                 } catch (ex) {
                     console.log("Cannot load " + domainName + " due to: " + ex);
+                } finally {
+                    // Catching errors on page closing
+                    // https://github.com/GoogleChrome/puppeteer/issues/957
+                    try {
+                        // Closing tab
+                        await page.close();
+                    } catch (ex) {
+                        console.log("Cannot close page with " + domainName + " due to: " + ex);
+                    }
                 }
-
-                // Closing tab
-                await page.close();
             }
         } catch (ex) {
             console.log("Error while parsing: " + ex);
