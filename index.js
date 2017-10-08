@@ -13,7 +13,7 @@ var processWebsitesChrome = function (websites) {
 
     (async () => {
         // Initializing browser
-        const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+        let browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 
         try {
             for (var i = 0; i < websites.length; i++) {
@@ -49,14 +49,27 @@ var processWebsitesChrome = function (websites) {
                         await page.close();
                     } catch (ex) {
                         console.log("Cannot close page with " + domainName + " due to: " + ex);
+                        
+                        // We should reinitialize browser here as the previous "browser" instance is not open anymore
+                        try {
+                            await browser.close();
+                        } catch (ex) {
+                            console.log("Cannot close browser: " + ex);
+                        }
+
+                        browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
                     }
                 }
             }
         } catch (ex) {
             console.log("Error while parsing: " + ex);
+        } finally {
+            try {
+                await browser.close();
+            } catch (ex) {
+                console.log("Cannot close browser: " + ex);
+            }
         }
-
-        await browser.close();
     })();
 };
 
